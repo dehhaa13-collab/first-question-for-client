@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================
     // КОНФІГУРАЦІЯ — Вставте ваш URL Google Apps Script сюди
     // =========================================================
-    const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbz_Bhwb7zXEfMNQ5eN-2rtUncn1AW8xpj8IsawstwZMWdty_hpSEEJbMuXufUTcCk0D/exec';
+    const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbypY948KQP23xptGfzAB9RmgzGrh8f818e5Vdw6b9cNJrMYUe0vfx0mO5bKHzJZlkOQ/exec';
     // =========================================================
 
     const STORAGE_KEY = 'brief_form_draft';
