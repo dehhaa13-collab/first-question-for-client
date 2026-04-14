@@ -1,34 +1,22 @@
 /**
- * Google Apps Script — Преміальний бекенд для анкети v4.0
+ * ─────────────────────────────────────────────────────────
+ * Google Apps Script v5.0 — Повністю автоматичний бекенд!
+ * ─────────────────────────────────────────────────────────
+ * ВАМ БІЛЬШЕ НЕ ТРЕБА НІЧОГО ЗАПУСКАТИ ВРУЧНУ!
  * 
- * ІНСТРУКЦІЯ:
- * ─────────────────────────────────────────────────────
- * 1. Відкрийте Google Таблицю
- * 2. Розширення → Apps Script
- * 3. Видаліть ВСЕ старе → вставте ЦЕЙ код
- * 4. Збережіть (Ctrl+S)
- * 5. Виберіть функцію «setupSheet» → натисніть ▶ Запустити
- * 6. Deploy → New deployment → Web app
- *    - Execute as: Me
- *    - Who has access: Anyone
- * 7. Скопіюйте URL → вставте в js/script.js
- * ─────────────────────────────────────────────────────
+ * 1. Вставте цей код у редактор Apps Script.
+ * 2. Зробіть Deploy -> Manage deployments -> Редагувати (олівець) -> New version -> Deploy.
+ * 3. Все! При наступній відправці з сайту, скрипт САМ створить
+ *    всі красиві колонки, кольори та ширину у вашій таблиці.
+ * ─────────────────────────────────────────────────────────
  */
 
-// ═══════════════════════════════════════════════════
-//  КОНФІГУРАЦІЯ
-// ═══════════════════════════════════════════════════
+var NOTIFICATION_EMAIL = '';
+var MAX_FIELD_LENGTH = 5000;
 
-/** Email для сповіщень. Порожньо = вимкнено */
-const NOTIFICATION_EMAIL = '';
-
-/** Макс. довжина поля */
-const MAX_FIELD_LENGTH = 5000;
-
-/** Маппінг полів */
-const FIELD_MAP = [
+var FIELD_MAP = [
   { key: 'pib',               col: 'ПІБ клієнта',                     width: 200 },
-  { key: 'birthday',          col: 'День народження',                   width: 140 },
+  { key: 'birthday',          col: 'День народження',                   width: 130 },
   { key: 'instagram',         col: 'Instagram',                         width: 200 },
   { key: 'sphere_experience', col: 'Сфера та досвід роботи',            width: 300 },
   { key: 'reason_purchase',   col: 'Причина придбання послуги',         width: 300 },
@@ -42,292 +30,199 @@ const FIELD_MAP = [
   { key: 'additional_notes',  col: 'Додаткові зауваження',              width: 250 }
 ];
 
-// Палітра кольорів
 var C = {
   dark:      '#1e1e2e',
   accent:    '#4C84FF',
   accentBg:  '#e8eeff',
   white:     '#FFFFFF',
   light:     '#f7f8fc',
-  gray:      '#f1f3f9',
+  gray:      '#fcfcfd',
   border:    '#e0e4ee',
   textDark:  '#1a1a2e',
-  textMid:   '#555770',
-  textLight: '#8b8fa8',
-  green:     '#dcfce7',
-  greenText: '#166534',
-  pibBg:     '#dbeafe',
+  green:     '#ecfdf5',
+  greenText: '#065f46',
+  pibBg:     '#eff6ff',
   pibText:   '#1e40af',
-  emptyBg:   '#fef2f2',
-  emptyText: '#b91c1c',
+  emptyBg:   '#fff1f2',
+  emptyText: '#be123c',
 };
-
-
-// ═══════════════════════════════════════════════════
-//  УТИЛІТИ
-// ═══════════════════════════════════════════════════
 
 function sanitize(value) {
   if (typeof value !== 'string') return '';
   var clean = value.trim();
-  // Захист від Formula injection
-  if (/^[=+\-@\t\r]/.test(clean)) {
-    clean = "'" + clean;
-  }
-  if (clean.length > MAX_FIELD_LENGTH) {
-    clean = clean.substring(0, MAX_FIELD_LENGTH);
-  }
+  if (/^[=+\-@\t\r]/.test(clean)) clean = "'" + clean;
+  if (clean.length > MAX_FIELD_LENGTH) clean = clean.substring(0, MAX_FIELD_LENGTH);
   return clean;
 }
 
-function getMainSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  // Шукаємо лист «Відповіді» (може називатись по-різному)
-  var sheet = ss.getSheetByName('Відповіді');
-  if (!sheet) {
-    // Спробуємо знайти перший лист
-    sheet = ss.getSheets()[0];
-  }
-  return sheet;
-}
-
-
-// ═══════════════════════════════════════════════════
-//  ГОЛОВНА ФУНКЦІЯ: SETUPSHEET
-//  Запустіть ОДИН РАЗ перед Deploy
-// ═══════════════════════════════════════════════════
-
-function setupSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheets()[0]; // Беремо перший лист
-
-  // Перейменувати лист
-  sheet.setName('Відповіді');
-
-  // Повністю очистити весь лист
-  sheet.clear();
-  sheet.clearFormats();
-  sheet.clearNotes();
-
-  // --- Рядок 1: НАЗВА ТАБЛИЦІ (мерж) ---
-  var totalCols = FIELD_MAP.length + 2; // №, Час, + 13 полів = 15
-
-  var titleRange = sheet.getRange(1, 1, 1, totalCols);
-  titleRange.merge();
-  titleRange.setValue('📋  ДІАГНОСТИЧНА АНКЕТА КЛІЄНТА  —  Відповіді');
-  titleRange.setBackground(C.dark);
-  titleRange.setFontColor(C.white);
-  titleRange.setFontSize(14);
-  titleRange.setFontWeight('bold');
-  titleRange.setFontFamily('Arial');
-  titleRange.setHorizontalAlignment('center');
-  titleRange.setVerticalAlignment('middle');
-  sheet.setRowHeight(1, 48);
-
-  // --- Рядок 2: ЗАГОЛОВКИ КОЛОНОК ---
-  var headers = ['№', 'Дата та час'];
-  for (var i = 0; i < FIELD_MAP.length; i++) {
-    headers.push(FIELD_MAP[i].col);
-  }
-
-  var headerRange = sheet.getRange(2, 1, 1, totalCols);
-  headerRange.setValues([headers]);
-  headerRange.setBackground(C.accent);
-  headerRange.setFontColor(C.white);
-  headerRange.setFontWeight('bold');
-  headerRange.setFontSize(10);
-  headerRange.setFontFamily('Arial');
-  headerRange.setHorizontalAlignment('center');
-  headerRange.setVerticalAlignment('middle');
-  headerRange.setWrap(true);
-  sheet.setRowHeight(2, 42);
-
-  // --- Ширина колонок ---
-  sheet.setColumnWidth(1, 45);   // №
-  sheet.setColumnWidth(2, 145);  // Дата та час
-  for (var j = 0; j < FIELD_MAP.length; j++) {
-    sheet.setColumnWidth(j + 3, FIELD_MAP[j].width);
-  }
-
-  // --- Закріпити рядки 1-2 ---
-  sheet.setFrozenRows(2);
-
-  // --- Захист заголовків ---
-  var prot = sheet.getRange(1, 1, 2, totalCols).protect();
-  prot.setDescription('Заголовки');
-  prot.setWarningOnly(true);
-
-  // --- Підготовка області даних (рядки 3-500) ---
-  var dataArea = sheet.getRange(3, 1, 498, totalCols);
-  dataArea.setFontFamily('Arial');
-  dataArea.setFontSize(10);
-  dataArea.setVerticalAlignment('top');
-  dataArea.setWrap(true);
-
-  // --- Бордери на заголовках ---
-  headerRange.setBorder(true, true, true, true, true, true, C.dark, SpreadsheetApp.BorderStyle.SOLID);
-
-  // --- Видалити зайві листи ---
-  var sheets = ss.getSheets();
-  for (var s = 0; s < sheets.length; s++) {
-    if (sheets[s].getName() !== 'Відповіді' && sheets.length > 1) {
-      try { ss.deleteSheet(sheets[s]); } catch(e) {}
-    }
-  }
-
-  SpreadsheetApp.flush();
-  Logger.log('✅ Таблицю налаштовано! Тепер Deploy → New deployment.');
-}
-
-
-// ═══════════════════════════════════════════════════
-//  ОБРОБКА POST-ЗАПИТІВ
-// ═══════════════════════════════════════════════════
-
 function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  
   try {
-    var lock = LockService.getScriptLock();
-    lock.waitLock(10000);
-
-    var sheet = getMainSheet();
-
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    // Знаходимо або створюємо лист "Анкети"
+    var sheet = ss.getSheetByName('Анкети') || ss.insertSheet('Анкети');
+    
+    // АВТОМАТИЧНЕ НАЛАШТУВАННЯ ТАБЛИЦІ (якщо його ще нема)
+    var isInitialized = sheet.getRange(1, 1).getValue() === '📋 ДІАГНОСТИЧНА АНКЕТА';
+    if (!isInitialized) {
+      setupBeautifulHeaders(sheet);
+    }
+    
     var data;
-    try {
-      data = JSON.parse(e.postData.contents);
-    } catch (parseError) {
-      data = e.parameter || {};
-    }
+    try { data = JSON.parse(e.postData.contents); } 
+    catch (err) { data = e.parameter || {}; }
 
-    // Валідація
     if (!data.pib || data.pib.trim() === '') {
-      return ContentService.createTextOutput(
-        JSON.stringify({ status: 'error', message: 'ПІБ обовʼязкове' })
-      ).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'ПІБ обовʼязкове' })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // Часовий штамп
-    var timestamp = Utilities.formatDate(
-      new Date(),
-      Session.getScriptTimeZone(),
-      'dd.MM.yyyy  HH:mm'
-    );
+    var timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd.MM.yyyy HH:mm');
+    var lastRow = Math.max(2, sheet.getLastRow()); // Заголовки займають 2 рядки
+    var rowNumber = lastRow - 1; 
 
-    // Номер заявки (рядок 1 = назва, рядок 2 = заголовки, дані з рядка 3)
-    var lastRow = sheet.getLastRow();
-    var rowNumber = Math.max(1, lastRow - 1); // -1 бо 2 рядки заголовків
-
-    // Збираємо рядок
+    // Формуємо масив даних для рядка
     var row = [rowNumber, timestamp];
     for (var i = 0; i < FIELD_MAP.length; i++) {
       row.push(sanitize(data[FIELD_MAP[i].key] || ''));
     }
 
-    // Вставляємо
+    // Вставляємо новий рядок
     sheet.appendRow(row);
-
-    // Форматуємо рядок
     var newRowNum = sheet.getLastRow();
+    
+    // Фарбуємо новий рядок
     formatRow(sheet, newRowNum);
+
+    // Видаляємо дефолтний Лист1 якщо він пустий
+    var sheet1 = ss.getSheetByName('Лист1') || ss.getSheetByName('Sheet1');
+    if (sheet1 && ss.getSheets().length > 1 && sheet1.getLastRow() === 0) {
+      ss.deleteSheet(sheet1);
+    }
 
     SpreadsheetApp.flush();
     lock.releaseLock();
-
-    // Email
+    
+    // Відправляємо імейл якщо налаштовано
     if (NOTIFICATION_EMAIL) {
       sendEmail(data, timestamp, rowNumber);
     }
 
-    return ContentService.createTextOutput(
-      JSON.stringify({ status: 'success', number: rowNumber })
-    ).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ status: 'success', number: rowNumber })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
-    return ContentService.createTextOutput(
-      JSON.stringify({ status: 'error', message: error.toString() })
-    ).setMimeType(ContentService.MimeType.JSON);
+    if (lock) lock.releaseLock();
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
 function doGet() {
-  return ContentService.createTextOutput(
-    JSON.stringify({ status: 'ok', version: '4.0' })
-  ).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', version: '5.0-AUTO' })).setMimeType(ContentService.MimeType.JSON);
 }
 
+// ─────────────────────────────────────────────────────────
+// МАЛЮЄМО КРАСИВІ ЗАГОЛОВКИ (ТІЛЬКИ 1 РАЗ)
+// ─────────────────────────────────────────────────────────
+function setupBeautifulHeaders(sheet) {
+  // Якщо юзер вже щось наклікав в рядок 1 (тестові дані) — зсуваємо їх вниз
+  if (sheet.getLastRow() > 0) {
+    sheet.insertRowsBefore(1, 2);
+  }
+  
+  var totalCols = FIELD_MAP.length + 2;
+  
+  // -- РЯДОК 1: ТЕМНИЙ БАНЕР --
+  var titleRange = sheet.getRange(1, 1, 1, totalCols);
+  titleRange.merge();
+  titleRange.setValue('📋 ДІАГНОСТИЧНА АНКЕТА');
+  titleRange.setBackground(C.dark);
+  titleRange.setFontColor(C.white);
+  titleRange.setFontSize(14);
+  titleRange.setFontWeight('bold');
+  titleRange.setHorizontalAlignment('center');
+  titleRange.setVerticalAlignment('middle');
+  sheet.setRowHeight(1, 48);
+  
+  // -- РЯДОК 2: СИНІ ЗАГОЛОВКИ КОЛОНОК --
+  var headers = ['№', 'Дата та час'];
+  for (var i = 0; i < FIELD_MAP.length; i++) headers.push(FIELD_MAP[i].col);
+  
+  var headerRange = sheet.getRange(2, 1, 1, totalCols);
+  headerRange.setValues([headers]);
+  headerRange.setBackground(C.accent);
+  headerRange.setFontColor(C.white);
+  headerRange.setFontWeight('bold');
+  headerRange.setFontSize(11);
+  headerRange.setHorizontalAlignment('center');
+  headerRange.setVerticalAlignment('middle');
+  headerRange.setWrap(true);
+  sheet.setRowHeight(2, 44);
+  
+  // -- ШИРИНА КОЛОНОК --
+  sheet.setColumnWidth(1, 45); 
+  sheet.setColumnWidth(2, 120); 
+  for (var j = 0; j < FIELD_MAP.length; j++) {
+    sheet.setColumnWidth(j + 3, FIELD_MAP[j].width);
+  }
+  
+  // Заморожуємо верхні 2 рядки
+  sheet.setFrozenRows(2);
+}
 
-// ═══════════════════════════════════════════════════
-//  ФОРМАТУВАННЯ НОВОГО РЯДКА
-// ═══════════════════════════════════════════════════
-
+// ─────────────────────────────────────────────────────────
+// ФАРБУВАННЯ РЯДКА З ДАНИМИ КЛІЄНТА
+// ─────────────────────────────────────────────────────────
 function formatRow(sheet, rowNum) {
   var totalCols = FIELD_MAP.length + 2;
   var range = sheet.getRange(rowNum, 1, 1, totalCols);
 
-  // Зебра
   var isEven = (rowNum % 2 === 0);
   range.setBackground(isEven ? C.gray : C.white);
-
-  // Шрифт
   range.setFontFamily('Arial');
   range.setFontSize(10);
   range.setFontColor(C.textDark);
   range.setVerticalAlignment('top');
   range.setWrap(true);
+  sheet.setRowHeight(rowNum, 40);
 
-  // Мінімальна висота рядка
-  sheet.setRowHeight(rowNum, 36);
+  // №
+  sheet.getRange(rowNum, 1)
+    .setBackground(C.accentBg)
+    .setFontColor(C.accent)
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
 
-  // --- Колонка № ---
-  var numCell = sheet.getRange(rowNum, 1);
-  numCell.setBackground(C.accentBg);
-  numCell.setFontColor(C.accent);
-  numCell.setFontWeight('bold');
-  numCell.setHorizontalAlignment('center');
-  numCell.setVerticalAlignment('middle');
+  // Час
+  sheet.getRange(rowNum, 2)
+    .setBackground(C.green)
+    .setFontColor(C.greenText)
+    .setFontSize(9)
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
 
-  // --- Колонка Час ---
-  var timeCell = sheet.getRange(rowNum, 2);
-  timeCell.setBackground(C.green);
-  timeCell.setFontColor(C.greenText);
-  timeCell.setFontSize(9);
-  timeCell.setHorizontalAlignment('center');
-  timeCell.setVerticalAlignment('middle');
+  // ПІБ (Колонка 3)
+  sheet.getRange(rowNum, 3)
+    .setBackground(C.pibBg)
+    .setFontColor(C.pibText)
+    .setFontWeight('bold')
+    .setFontSize(11);
 
-  // --- Колонка ПІБ (3) ---
-  var pibCell = sheet.getRange(rowNum, 3);
-  pibCell.setBackground(C.pibBg);
-  pibCell.setFontColor(C.pibText);
-  pibCell.setFontWeight('bold');
-  pibCell.setFontSize(11);
-
-  // --- Колонка Instagram (5) — зробити клікабельним ---
+  // Instagram (Колонка 5) - Клікабельне посилання
   var igCell = sheet.getRange(rowNum, 5);
-  var igVal = igCell.getValue();
-  if (igVal && String(igVal).length > 0) {
-    var igStr = String(igVal).trim();
-    var igUrl = igStr;
-    // Нормалізуємо URL
-    if (igStr.charAt(0) === '@') {
-      igUrl = 'https://instagram.com/' + igStr.substring(1);
-    } else if (igStr.indexOf('http') !== 0) {
-      igUrl = 'https://instagram.com/' + igStr;
-    }
-    // Використовуємо RichTextValue замість HYPERLINK формули
-    var richText = SpreadsheetApp.newRichTextValue()
-      .setText(igStr)
-      .setLinkUrl(igUrl)
-      .build();
+  var igVal = String(igCell.getValue() || '').trim();
+  if (igVal !== '') {
+    var igUrl = igVal.charAt(0) === '@' ? 'https://instagram.com/' + igVal.substring(1) : (igVal.indexOf('http') !== 0 ? 'https://instagram.com/' + igVal : igVal);
+    var richText = SpreadsheetApp.newRichTextValue().setText(igVal).setLinkUrl(igUrl).build();
     igCell.setRichTextValue(richText);
     igCell.setFontColor(C.accent);
   }
 
-  // --- Позначити пусті обов'язкові поля ---
-  // Колонки 3-14 (ПІБ до Минулий досвід) — обов'язкові
-  // Колонка 15 (Додаткові) — необов'язкова
-  for (var col = 3; col <= totalCols - 1; col++) {
-    var cell = sheet.getRange(rowNum, col);
-    var val = cell.getValue();
-    if (val === '' || val === null || val === undefined) {
+  // Пусті клітинки (червоний мінус)
+  for (var c = 3; c <= totalCols - 1; c++) {
+    var cell = sheet.getRange(rowNum, c);
+    if (String(cell.getValue() || '').trim() === '') {
       cell.setBackground(C.emptyBg);
       cell.setValue('—');
       cell.setFontColor(C.emptyText);
@@ -336,33 +231,14 @@ function formatRow(sheet, rowNum) {
     }
   }
 
-  // --- Тонкий бордер знизу ---
-  range.setBorder(
-    false, false, true, false, false, false,
-    C.border, SpreadsheetApp.BorderStyle.SOLID
-  );
+  // Бордер
+  range.setBorder(false, false, true, false, false, false, C.border, SpreadsheetApp.BorderStyle.SOLID);
 }
 
-
-// ═══════════════════════════════════════════════════
-//  EMAIL СПОВІЩЕННЯ
-// ═══════════════════════════════════════════════════
-
-function sendEmail(data, timestamp, number) {
+function sendEmail(data, ts, num) {
   try {
-    var name = data.pib || 'Невідомий';
-    var subject = '📋 Заявка #' + number + ': ' + name;
-
-    var body = 'Нова заявка #' + number + ' о ' + timestamp + '\n\n';
-    for (var i = 0; i < FIELD_MAP.length; i++) {
-      var val = data[FIELD_MAP[i].key] || '—';
-      body += FIELD_MAP[i].col + ':\n' + val + '\n\n';
-    }
-    body += '━━━━━━━━━━━━━━━━━━━━━━━━\n';
-    body += 'Таблиця: ' + SpreadsheetApp.getActiveSpreadsheet().getUrl();
-
-    MailApp.sendEmail({ to: NOTIFICATION_EMAIL, subject: subject, body: body });
-  } catch (err) {
-    Logger.log('Email error: ' + err);
-  }
+    var body = 'Нова заявка #' + num + ' о ' + ts + '\n\n';
+    for (var i = 0; i < FIELD_MAP.length; i++) body += FIELD_MAP[i].col + ':\n' + (data[FIELD_MAP[i].key] || '—') + '\n\n';
+    MailApp.sendEmail({ to: NOTIFICATION_EMAIL, subject: '📋 Заявка #' + num + ': ' + (data.pib || 'Невідомий'), body: body });
+  } catch (err) { }
 }
