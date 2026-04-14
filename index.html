@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="Діагностична анкета клієнта — заповніть бриф для створення максимально корисної та інформативної консультації.">
+    <meta name="theme-color" content="#0a0b0f">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Діагностична анкета клієнта">
+    <meta property="og:description" content="Заповніть бриф для створення максимально корисної та інформативної консультації ❤️">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="uk_UA">
+    
+    <title>Діагностична анкета клієнта</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Animated background orbs -->
+    <div class="bg-orbs" aria-hidden="true">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="orb orb-4"></div>
+        <div class="grain-overlay"></div>
+    </div>
+
+    <div class="container">
+        <header class="form-header" id="formHeader">
+            <div class="logo-icon" aria-hidden="true">📋</div>
+            <h1>Діагностична анкета клієнта</h1>
+            <p class="description">Питання для ближчого знайомства з вами та створення плану максимально корисної та інформативної консультації. Відповіді мають бути розгорнуті для кращого розуміння ❤️</p>
+            <div class="progress-wrapper">
+                <div class="progress-bar" id="progressBar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="13">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-meta">
+                    <span class="progress-text" id="progressText">0 з 13 питань</span>
+                    <span class="autosave-indicator" id="autosaveIndicator" aria-live="polite"></span>
+                </div>
+            </div>
+        </header>
+
+        <form id="briefForm" class="brief-form" novalidate>
+            
+            <!-- Секція 1: Особисті дані -->
+            <fieldset class="form-section">
+                <legend class="section-title">Про вас</legend>
+
+                <div class="form-group" data-question="1">
+                    <label for="q1">
+                        <span class="q-number">1</span>
+                        ПІБ <span class="required">*</span>
+                    </label>
+                    <input type="text" id="q1" name="pib" autocomplete="name" placeholder="Ваше прізвище, ім'я та по батькові" required>
+                    <span class="field-error" id="q1-error" role="alert"></span>
+                </div>
+
+                <div class="form-group" data-question="2">
+                    <label for="q2">
+                        <span class="q-number">2</span>
+                        День Народження <span class="required">*</span>
+                    </label>
+                    <input type="text" id="q2" name="birthday" inputmode="numeric" placeholder="ДД.ММ.РРРР" maxlength="10" required>
+                    <span class="field-error" id="q2-error" role="alert"></span>
+                </div>
+
+                <div class="form-group" data-question="3">
+                    <label for="q3">
+                        <span class="q-number">3</span>
+                        Instagram сторінка вашого бізнесу <span class="required">*</span>
+                    </label>
+                    <input type="text" id="q3" name="instagram" inputmode="url" placeholder="@username або посилання" required>
+                    <span class="field-error" id="q3-error" role="alert"></span>
+                </div>
+            </fieldset>
+
+            <!-- Секція 2: Про вашу діяльність -->
+            <fieldset class="form-section">
+                <legend class="section-title">Ваша діяльність</legend>
+
+                <div class="form-group" data-question="4">
+                    <label for="q4">
+                        <span class="q-number">4</span>
+                        В якій сфері та як давно ви працюєте, який статус/рівень маєте? <span class="required">*</span>
+                    </label>
+                    <textarea id="q4" name="sphere_experience" rows="3" placeholder="Розкажіть детальніше про свій досвід..." required></textarea>
+                    <span class="char-count" data-for="q4"></span>
+                    <span class="field-error" id="q4-error" role="alert"></span>
+                </div>
+
+                <div class="form-group" data-question="5">
+                    <label for="q5">
+                        <span class="q-number">5</span>
+                        З якої причини придбали саме нашу послугу? <span class="required">*</span>
+                    </label>
+                    <textarea id="q5" name="reason_purchase" rows="3" placeholder="Ваша відповідь" required></textarea>
+                    <span class="char-count" data-for="q5"></span>
+                    <span class="field-error" id="q5-error" role="alert"></span>
+                </div>
+
+                <div class="form-group" data-question="6">
+                    <label for="q6">
+                        <span class="q-number">6</span>
+                        Що стало кінцевою точкою у прийнятому рішенні звернутися до нас та скористатися послугою? <span class="required">*</span>
+                    </label>
+                    <textarea id="q6" name="decision_point" rows="3" placeholder="Ваша відповідь" required></textarea>
+                    <span class="char-count" data-for="q6"></span>
+                    <span class="field-error" id="q6-error" role="alert"></span>
+                </div>
+            </fieldset>
+
+            <!-- Секція 3: Очікування -->
+            <fieldset class="form-section">
+                <legend class="section-title">Ваші цілі та очікування</legend>
+
+                <div class="form-group" data-question="7">
+                    <label for="q7">
+                        <span class="q-number">7</span>
+                        Яку потребу ви хочете закрити нашим продуктом? <span class="required">*</span>
+                    </label>
+                    <textarea id="q7" name="need_to_close" rows="3" placeholder="Ваша відповідь" required></textarea>
+                    <span class="char-count" data-for="q7"></span>
+                    <span class="field-error" id="q7-error" role="alert"></span>
+                </div>
+
+                <div class="form-group" data-question="8">
+                    <label for="q8">
+                        <span class="q-number">8</span>
+                        Яка ваша мрія або ціль має здійснитись завдяки нашому продукту? <span class="required">*</span>
+                    </label>
+                    <textarea id="q8" name="dream_goal" rows="3" placeholder="Ваша відповідь" required></textarea>
+                    <span class="char-count" data-for="q8"></span>
+                    <span class="field-error" id="q8-error" role="alert"></span>
+                </div>
+
+                <div class="form-group" data-question="9">
+                    <label for="q9">
+                        <span class="q-number">9</span>
+                        Які очікування ви маєте від співпраці з нами та який саме результат уявляєте? <span class="required">*</span>
+                    </label>
+                    <textarea id="q9" name="expectations" rows="3" placeholder="Ваша відповідь" required></textarea>
+                    <span class="char-count" data-for="q9"></span>
+                    <span class="field-error" id="q9-error" role="alert"></span>
+                </div>
+            </fieldset>
+
+            <!-- Секція 4: Труднощі та досвід -->
+            <fieldset class="form-section">
+                <legend class="section-title">Труднощі та досвід</legend>
+
+                <div class="form-group" data-question="10">
+                    <label for="q10">
+                        <span class="q-number">10</span>
+                        Вкажіть всі теми або навички, які торкаються вашого бізнесу, ви в них не розбираєтесь, проте хотіли б <span class="required">*</span>
+                    </label>
+                    <span class="sub-label">Наприклад: залучення клієнтів, ведення фін. звітів, створення контенту тощо</span>
+                    <textarea id="q10" name="skills_to_learn" rows="3" placeholder="Ваша відповідь" required></textarea>
+                    <span class="char-count" data-for="q10"></span>
+                    <span class="field-error" id="q10-error" role="alert"></span>
+                </div>
+
+                <div class="form-group" data-question="11">
+                    <label for="q11">
+                        <span class="q-number">11</span>
+                        Які конкретні труднощі ви маєте у веденні своєї сторінки? <span class="required">*</span>
+                    </label>
+                    <textarea id="q11" name="page_difficulties" rows="3" placeholder="Ваша відповідь" required></textarea>
+                    <span class="char-count" data-for="q11"></span>
+                    <span class="field-error" id="q11-error" role="alert"></span>
+                </div>
+
+                <div class="form-group" data-question="12">
+                    <label for="q12">
+                        <span class="q-number">12</span>
+                        Чи користувались ви раніше схожими послугами? Якщо так, розкажіть про цей досвід <span class="required">*</span>
+                    </label>
+                    <textarea id="q12" name="past_experience" rows="3" placeholder="Ваша відповідь" required></textarea>
+                    <span class="char-count" data-for="q12"></span>
+                    <span class="field-error" id="q12-error" role="alert"></span>
+                </div>
+
+                <div class="form-group" data-question="13">
+                    <label for="q13">
+                        <span class="q-number">13</span>
+                        Додайте, чим ще хочеться поділитися, підкреслити чи зауважити
+                    </label>
+                    <textarea id="q13" name="additional_notes" rows="3" placeholder="Необов'язкове поле"></textarea>
+                    <span class="char-count" data-for="q13"></span>
+                </div>
+            </fieldset>
+
+            <button type="submit" id="submitBtn" class="btn-submit">
+                <span class="btn-text">
+                    <svg class="btn-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    Надіслати анкету
+                </span>
+                <span class="btn-loader hidden">
+                    <svg class="spinner" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="31.4 31.4" /></svg>
+                    Відправляємо...
+                </span>
+            </button>
+        </form>
+        
+        <!-- Успішна відправка -->
+        <div id="successMessage" class="hidden status-message success">
+            <div class="success-particles" aria-hidden="true"></div>
+            <div class="success-icon-wrap">
+                <svg viewBox="0 0 24 24" class="icon-success"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <h2>Дякуємо! 🎉</h2>
+            <p>Вашу анкету успішно надіслано.<br>Ми зв'яжемося з вами найближчим часом.</p>
+        </div>
+        
+        <!-- Помилка -->
+        <div id="errorMessage" class="hidden status-message error">
+            <div class="error-icon-wrap">
+                <svg viewBox="0 0 24 24" class="icon-error"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            </div>
+            <p>Сталася помилка при відправці.<br>Перевірте з'єднання та спробуйте ще раз.</p>
+            <button type="button" id="retryBtn" class="btn-retry">Спробувати ще раз</button>
+        </div>
+
+        <footer class="site-footer">
+            <p>© 2026 — Діагностична анкета</p>
+        </footer>
+    </div>
+
+    <noscript>
+        <div style="padding:40px 20px;text-align:center;color:#f0f1f5;font-family:sans-serif;max-width:100%;overflow:hidden;">
+            <h2>⚠️ JavaScript вимкнено</h2>
+            <p>Для коректної роботи анкети увімкніть JavaScript у вашому браузері.</p>
+        </div>
+    </noscript>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
